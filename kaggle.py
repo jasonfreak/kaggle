@@ -1,7 +1,6 @@
 from os import listdir
 from os.path import basename, splitext
 from argparse import ArgumentParser
-import json
 import numpy as np
 from sklearn.externals import joblib
 from sklearn.grid_search import BaseSearchCV
@@ -12,10 +11,7 @@ import complib
 def fit(competition, label, train):
     lib = getattr(complib, competition)
 
-    with open('config/{competition}.json'.format(competition=competition)) as f:
-        config = json.load(f)
-
-    model = lib.model(*config['param_list'], **config['param_dict'])
+    model = lib.model()
     try:
         trainSet = joblib.load('dump/{competition}/train.dmp'.format(competition=competition))
     except IOError, e:
@@ -52,28 +48,29 @@ def singleParamAnalyze(competition, label, param):
 
     n_grid_scores = len(model.grid_scores_)
     assert(len(model.grid_scores_[0][0]) == 1 and param in model.grid_scores_[0][0])
-    paraType = type(model.grid_scores_[0][0][param])
+    paramType = type(model.grid_scores_[0][0][param])
     valueList = np.array([])
     scoreList = np.array([])
 
     for grid_score in model.grid_scores_:
         valueList = np.append(valueList, grid_score[0][param])
         scoreList = np.append(scoreList, grid_score[1])
-    scoreList = minmax_scale(scoreList)
 
-    if paraType is unicode:
+    if paramType is unicode:
         x_ticks = np.unique(valueList)
-        x_tickDict = dict([(x_ticks[i], i) for i in range(len(x_ticks))])
+        x_tickDict = dict([(x_ticks[i], i+0.5) for i in range(len(x_ticks))])
         x_pos = [x_tickDict[value] for value in valueList]
         plt.xticks(x_tickDict.values(), x_tickDict.keys())
     else:
         valueList, scoreList = _sortValueAndScore(valueList, scoreList)
-        x_pos = valueList
+        x_pos = np.arange(n_grid_scores) + 0.5
+        plt.xticks(x_pos, valueList)
     plt.plot(x_pos, scoreList, '-')
 
+    plt.axis([0, n_grid_scores, 0, 1])
     plt.title('How {param} Affects Accuracy'.format(param=param))
-    plt.x_label(param)
-    plt.y_label('Accuracy')
+    plt.xlabel(param)
+    plt.ylabel('Accuracy')
     plt.show()
     print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
 
@@ -83,36 +80,28 @@ def coupleParamAnalyze(competition, label, param1, param2):
 
     n_grid_scores = len(model.grid_scores_)
     assert(len(model.grid_scores_[0][0]) == 2 and param1 in model.grid_scores_[0][0] and param2 in model.grid_scores_[0][0])
-    paraType1 = type(model.grid_scores_[0][0][param1])
-    paraType2 = type(model.grid_scores_[0][0][param2])
-    valueList1 = np.array([])
-    valueList2 = np.array([])
-    scoreList = np.array([])
+    paramType1 = type(model.grid_scores_[0][0][param1])
+    paramType2 = type(model.grid_scores_[0][0][param2])
+    param_grid = getattr(model, 'param_grid')
+    n_x_values = len(param_grid[param1])
+    n_y_values = len(param_grid[param2])
+    param_x_pos = dict(zip(param_grid[param1], range(n_x_values)))
+    param_y_pos = dict(zip(param_grid[param2], range(n_y_values)))
+    param_shape = (n_x_values, n_y_values)
+
+    scores = np.zeros(param_shape)
 
     for grid_score in model.grid_scores_:
-        valueList1 = np.append(valueList1, grid_score[0][param1])
-        valueList2 = np.append(valueList2, grid_score[0][param2])
-        scoreList = np.append(scoreList, grid_score[1])
+        value1 = grid_score[0][param1]
+        value2 = grid_score[0][param2]
+        scores[param_x_pos[value1], param_y_pos[value2]] = grid_score[1] 
 
-    scoreList = minmax_scale(scoreList)
+    image = 1 - minmax_scale(scores).T
 
-    if paraType1 is unicode:
-        x_ticks = np.unique(valueList1)
-        x_tickDict = dict([(x_ticks[i], i) for i in range(len(x_ticks))])
-        x_pos = [x_tickDict[value] for value in valueList1]
-        plt.xticks(x_tickDict.values(), x_tickDict.keys())
-    else:
-        x_pos = valueList1
+    plt.xticks(param_x_pos.values(), param_x_pos.keys())
+    plt.yticks(param_y_pos.values(), param_y_pos.keys())
 
-    if paraType2 is unicode:
-        y_ticks = np.unique(valueList2)
-        y_tickDict = dict([(y_ticks[i], i) for i in range(len(y_ticks))])
-        y_pos = [y_tickDict[value] for value in valueList2]
-        plt.xticks(y_tickDict.values(), y_tickDict.keys())
-    else:
-        y_pos = valueList2
-
-    plt.scatter(x_pos, y_pos, c=np.repeat((1-scoreList).reshape((-1,1)), 3, axis=1), alpha=0.5)
+    plt.imshow(image, cmap=plt.cm.gray, interpolation='nearest')
     plt.xlabel(param1)
     plt.ylabel(param2)
     plt.title('How {param1} and {param2} Affects Accuracy'.format(param1=param1, param2=param2))
