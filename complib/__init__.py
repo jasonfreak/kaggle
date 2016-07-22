@@ -1,3 +1,3 @@
-import digit_recognizer
+import digit_recognizer, toy
 
-__all__ = ['digit_recognizer']
+__all__ = ['digit_recognizer', 'toy']
