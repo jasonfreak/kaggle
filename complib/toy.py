@@ -6,7 +6,7 @@ from sklearn.datasets import load_boston
 def model(*argList, **argDict):
     classifier = RandomForestRegressor()
 #    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 20), 'max_features':np.arange(0.1, 1.0, 0.1)})
-    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(5, 15)})
+    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 100, 10), 'max_depth':np.arange(50, 100, 5)})
     return searcher
     
 def loadTrainSet(filepath):

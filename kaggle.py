@@ -4,8 +4,6 @@ from argparse import ArgumentParser
 import numpy as np
 from sklearn.externals import joblib
 from sklearn.grid_search import BaseSearchCV
-from sklearn.preprocessing import minmax_scale
-from matplotlib import pyplot as plt
 import complib
 
 def fit(competition, label, train):
@@ -43,7 +41,9 @@ def _sortValueAndScore(valueList, scoreList):
     return valueList, scoreList
 
 def singleParamAnalyze(competition, label, param):
+    from matplotlib import pyplot as plt
     model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
+    print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
     assert(isinstance(model, BaseSearchCV))
 
     n_grid_scores = len(model.grid_scores_)
@@ -72,10 +72,11 @@ def singleParamAnalyze(competition, label, param):
     plt.xlabel(param)
     plt.ylabel('Accuracy')
     plt.show()
-    print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
 
 def coupleParamAnalyze(competition, label, param1, param2):
+    from matplotlib import pyplot as plt
     model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
+    print 'Best Score:{best_score}\nBest Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
     assert(isinstance(model, BaseSearchCV))
 
     n_grid_scores = len(model.grid_scores_)
@@ -101,7 +102,7 @@ def coupleParamAnalyze(competition, label, param1, param2):
     idx_max_x = np.dot((scores == max_x.reshape((-1, 1))), np.arange(n_x_values))
     idx_max_y = np.dot(np.arange(n_y_values), (scores == max_y.reshape((1, -1))))
 
-    image = 1 - minmax_scale(scores)
+    image = 1 - scores
 
     plt.xticks(param_x_pos.values(), param_x_pos.keys())
     plt.yticks(param_y_pos.values(), param_y_pos.keys())
@@ -111,8 +112,7 @@ def coupleParamAnalyze(competition, label, param1, param2):
     plt.ylabel(param2)
     plt.title('How {param1} and {param2} Affects Accuracy'.format(param1=param1, param2=param2))
     plt.show()
-    print '{param1}\'s independence:{independence1}\n{param2}\'s independence:{independence2}'.format(param1=param1, independence1=np.std(idx_max_x), param2=param2, independence2=np.std(idx_max_y))
-    print 'Best Score:{best_score}\nBest Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
+#    print '{param1}\'s independence:{independence1}\n{param2}\'s independence:{independence2}'.format(param1=param1, independence1=np.std(idx_max_x), param2=param2, independence2=np.std(idx_max_y))
 
 def listall(competition):
     fileList = listdir('dump/{competition}/'.format(competition=competition))
