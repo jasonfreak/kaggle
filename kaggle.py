@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 from os import listdir
 from os.path import basename, splitext
 from argparse import ArgumentParser
@@ -34,20 +35,38 @@ def predict(competition, label, test, submission):
 
     lib.saveSubmission('data/{competition}/{submission}'.format(competition=competition, submission=submission), y)
 
+def analyze(competition, label):
+    from matplotlib import pyplot as plt
+    fig = plt.figure()
+
+    model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
+    assert(isinstance(model, BaseSearchCV))
+    print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
+
+    n_grid_scores = len(model.grid_scores_)
+    if n_grid_scores > 0:
+        n_params = len(model.grid_scores_[0][0])
+        if n_params == 1:
+            _singleParamAnalyze(plt, model)
+        elif n_params == 2:
+            _coupleParamAnalyze(plt, model)
+        else:
+            raise
+
+    with PdfPages('pdf/{competition}/{label}.pdf') as pdf:
+	    pdf.savefig(fig)
+    plt.close()
+
 def _sortValueAndScore(valueList, scoreList):
     valueAndScoreList = sorted(zip(valueList, scoreList), key=lambda x:x[0])
     valueList = [x[0] for x in valueAndScoreList]
     scoreList = [x[1] for x in valueAndScoreList]
     return valueList, scoreList
 
-def singleParamAnalyze(competition, label, param):
-    from matplotlib import pyplot as plt
-    model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
-    print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
-    assert(isinstance(model, BaseSearchCV))
-
+def _singleParamAnalyze(plt, model):
     n_grid_scores = len(model.grid_scores_)
-    assert(len(model.grid_scores_[0][0]) == 1 and param in model.grid_scores_[0][0])
+    param = model.grid_scores_[0].keys()[0]
+
     paramType = type(model.grid_scores_[0][0][param])
     valueList = np.array([])
     scoreList = np.array([])
@@ -71,16 +90,11 @@ def singleParamAnalyze(competition, label, param):
     plt.title('How {param} Affects Accuracy'.format(param=param))
     plt.xlabel(param)
     plt.ylabel('Accuracy')
-    plt.show()
 
-def coupleParamAnalyze(competition, label, param1, param2):
-    from matplotlib import pyplot as plt
-    model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
-    print 'Best Score:{best_score}\nBest Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
-    assert(isinstance(model, BaseSearchCV))
-
+def _coupleParamAnalyze(plt, model):
     n_grid_scores = len(model.grid_scores_)
-    assert(len(model.grid_scores_[0][0]) == 2 and param1 in model.grid_scores_[0][0] and param2 in model.grid_scores_[0][0])
+    param1, param2 = model.grid_scores_[0].keys()
+
     paramType1 = type(model.grid_scores_[0][0][param1])
     paramType2 = type(model.grid_scores_[0][0][param2])
     param_grid = getattr(model, 'param_grid')
@@ -102,6 +116,7 @@ def coupleParamAnalyze(competition, label, param1, param2):
     idx_max_x = np.dot((scores == max_x.reshape((-1, 1))), np.arange(n_x_values))
     idx_max_y = np.dot(np.arange(n_y_values), (scores == max_y.reshape((1, -1))))
 
+#    print '{param1}\'s independence:{independence1}\n{param2}\'s independence:{independence2}'.format(param1=param1, independence1=np.std(idx_max_x), param2=param2, independence2=np.std(idx_max_y))
     image = 1 - scores
 
     plt.xticks(param_x_pos.values(), param_x_pos.keys())
@@ -111,8 +126,6 @@ def coupleParamAnalyze(competition, label, param1, param2):
     plt.xlabel(param1)
     plt.ylabel(param2)
     plt.title('How {param1} and {param2} Affects Accuracy'.format(param1=param1, param2=param2))
-    plt.show()
-#    print '{param1}\'s independence:{independence1}\n{param2}\'s independence:{independence2}'.format(param1=param1, independence1=np.std(idx_max_x), param2=param2, independence2=np.std(idx_max_y))
 
 def listall(competition):
     fileList = listdir('dump/{competition}/'.format(competition=competition))
@@ -129,7 +142,6 @@ def main():
     parser.add_argument('--train', action='store', dest='train', default='train.csv', help='Train Set File')
     parser.add_argument('--test', action='store', dest='test', default='test.csv', help='Test Set File')
     parser.add_argument('--submission', action='store', dest='submission', default='submission.csv', help='Test Set File')
-    parser.add_argument('--param', action='append', dest='param', default=list(), help='Param')
 
     args = parser.parse_args()
 
@@ -137,11 +149,7 @@ def main():
     if args.action == 'fit':
         fit(args.competition, args.label, args.train)
     elif args.action == 'analyze':
-        n_params = len(args.param)
-        if  n_params == 1:
-            singleParamAnalyze(args.competition, args.label, args.param[0])
-        elif n_params == 2:
-            coupleParamAnalyze(args.competition, args.label, args.param[0], args.param[1])
+        analyze(args.competition, args.label)
     elif args.action == 'predict':
         predict(args.competition, args.label, args.test, args.submission)
     elif args.action == 'list':
