@@ -6,9 +6,11 @@ from sklearn.cross_validation import train_test_split
 def model(*argList, **argDict):
     classifier = RandomForestClassifier(verbose=2, n_jobs=-1)
 #    classifier = GradientBoostingClassifier(verbose=2)
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 101, 10)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 101, 10), 'max_features':np.arange(0.1, 1, 0.1)})
+    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_features':[0.1], 'min_samples_split':np.arange(2, 100, 10)})
 #    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[50, 100, 150], 'learning_rate':[0.05, 0.1, 0.15]})
 #    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(8, 12), 'max_features':np.arange(0.5, 1.0, 0.1)})
-    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(100, 1001, 300)})
     return searcher
     
 def loadTrainSet(filepath):

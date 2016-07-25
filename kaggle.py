@@ -5,6 +5,9 @@ from argparse import ArgumentParser
 import numpy as np
 from sklearn.externals import joblib
 from sklearn.grid_search import BaseSearchCV
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 import complib
 
 def fit(competition, label, train):
@@ -36,9 +39,6 @@ def predict(competition, label, test, submission):
     lib.saveSubmission('data/{competition}/{submission}'.format(competition=competition, submission=submission), y)
 
 def analyze(competition, label):
-    from matplotlib import pyplot as plt
-    fig = plt.figure()
-
     model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
     assert(isinstance(model, BaseSearchCV))
     print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
@@ -53,8 +53,7 @@ def analyze(competition, label):
         else:
             raise
 
-    with PdfPages('pdf/{competition}/{label}.pdf') as pdf:
-	    pdf.savefig(fig)
+    plt.savefig('pdf/{competition}/{label}.png'.format(competition=competition, label=label))
     plt.close()
 
 def _sortValueAndScore(valueList, scoreList):
@@ -65,7 +64,8 @@ def _sortValueAndScore(valueList, scoreList):
 
 def _singleParamAnalyze(plt, model):
     n_grid_scores = len(model.grid_scores_)
-    param = model.grid_scores_[0].keys()[0]
+    print model.grid_scores_[0]
+    param = model.grid_scores_[0][0].keys()[0]
 
     paramType = type(model.grid_scores_[0][0][param])
     valueList = np.array([])
@@ -93,7 +93,7 @@ def _singleParamAnalyze(plt, model):
 
 def _coupleParamAnalyze(plt, model):
     n_grid_scores = len(model.grid_scores_)
-    param1, param2 = model.grid_scores_[0].keys()
+    param1, param2 = model.grid_scores_[0][0].keys()
 
     paramType1 = type(model.grid_scores_[0][0][param1])
     paramType2 = type(model.grid_scores_[0][0][param2])
