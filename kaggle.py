@@ -43,18 +43,38 @@ def analyze(competition, label):
     assert(isinstance(model, BaseSearchCV))
     print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
 
+    dynamicParamAndType = _getDynamicParamAndType(model)
     n_grid_scores = len(model.grid_scores_)
     if n_grid_scores > 0:
-        n_params = len(model.grid_scores_[0][0])
+        n_params = len(dynamicParamAndType)
         if n_params == 1:
-            _singleParamAnalyze(plt, model)
+            param, paramType = dynamicParamAndType[0]
+            _singleParamAnalyze(plt, model, param, paramType)
         elif n_params == 2:
-            _coupleParamAnalyze(plt, model)
+            param1, paramType1= dynamicParamAndType[0]
+            param2, paramType2= dynamicParamAndType[1]
+            _coupleParamAnalyze(plt, model, (param1, param2), (paramType1, paramType2))
         else:
             raise
 
-    plt.savefig('pdf/{competition}/{label}.png'.format(competition=competition, label=label))
+    plt.savefig('pic/{competition}/{label}.png'.format(competition=competition, label=label))
     plt.close()
+
+    try:
+        trainSet = joblib.load('dump/{competition}/train.dmp'.format(competition=competition))
+    except IOError, e:
+        trainSet = lib.loadTrainSet('data/{competition}/{train}'.format(competition=competition, train=train))
+        joblib.dump(trainSet, 'dump/{competition}/train.dmp'.format(competition=competition), compress=3)
+
+    X, y = (trainSet[:,:-1], trainSet[:,-1])
+    print 'Score on Train:{score}'.format(score=model.score(X, y))
+
+def _getDynamicParamAndType(model):
+    param_grid = getattr(model, 'param_grid')
+    paramList = param_grid.keys()
+    dynamicParamList =  filter(lambda x:len(param_grid[x]) > 1, paramList)
+    paramTypeList =  map(lambda x:type(param_grid[x][0]), dynamicParamList)
+    return zip(dynamicParamList, paramTypeList)
 
 def _sortValueAndScore(valueList, scoreList):
     valueAndScoreList = sorted(zip(valueList, scoreList), key=lambda x:x[0])
@@ -62,12 +82,9 @@ def _sortValueAndScore(valueList, scoreList):
     scoreList = [x[1] for x in valueAndScoreList]
     return valueList, scoreList
 
-def _singleParamAnalyze(plt, model):
+def _singleParamAnalyze(plt, model, param, paramType):
     n_grid_scores = len(model.grid_scores_)
-    print model.grid_scores_[0]
-    param = model.grid_scores_[0][0].keys()[0]
 
-    paramType = type(model.grid_scores_[0][0][param])
     valueList = np.array([])
     scoreList = np.array([])
 
@@ -91,12 +108,11 @@ def _singleParamAnalyze(plt, model):
     plt.xlabel(param)
     plt.ylabel('Accuracy')
 
-def _coupleParamAnalyze(plt, model):
+def _coupleParamAnalyze(plt, model, params, paramsType):
     n_grid_scores = len(model.grid_scores_)
-    param1, param2 = model.grid_scores_[0][0].keys()
+    param1, param2 = params
+    paramType1, paramType2 = paramsType
 
-    paramType1 = type(model.grid_scores_[0][0][param1])
-    paramType2 = type(model.grid_scores_[0][0][param2])
     param_grid = getattr(model, 'param_grid')
     n_x_values = len(param_grid[param1])
     n_y_values = len(param_grid[param2])
