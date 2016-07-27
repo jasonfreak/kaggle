@@ -47,27 +47,24 @@ def analyze(competition, label):
     n_grid_scores = len(model.grid_scores_)
     if n_grid_scores > 0:
         n_params = len(dynamicParamAndType)
-        if n_params == 1:
-            param, paramType = dynamicParamAndType[0]
-            _singleParamAnalyze(plt, model, param, paramType)
-        elif n_params == 2:
-            param1, paramType1= dynamicParamAndType[0]
-            param2, paramType2= dynamicParamAndType[1]
-            _coupleParamAnalyze(plt, model, (param1, param2), (paramType1, paramType2))
-        else:
-            raise
+	if n_params in (1, 2):
+            if n_params == 1:
+                param, paramType = dynamicParamAndType[0]
+                _singleParamAnalyze(plt, model, param, paramType)
+            elif n_params == 2:
+                param1, paramType1= dynamicParamAndType[0]
+                param2, paramType2= dynamicParamAndType[1]
+                _coupleParamAnalyze(plt, model, (param1, param2), (paramType1, paramType2))
+            plt.savefig('pic/{competition}/{label}.png'.format(competition=competition, label=label))
+            plt.close()
+        try:
+            trainSet = joblib.load('dump/{competition}/train.dmp'.format(competition=competition))
+        except IOError, e:
+            trainSet = lib.loadTrainSet('data/{competition}/{train}'.format(competition=competition, train=train))
+            joblib.dump(trainSet, 'dump/{competition}/train.dmp'.format(competition=competition), compress=3)
 
-    plt.savefig('pic/{competition}/{label}.png'.format(competition=competition, label=label))
-    plt.close()
-
-    try:
-        trainSet = joblib.load('dump/{competition}/train.dmp'.format(competition=competition))
-    except IOError, e:
-        trainSet = lib.loadTrainSet('data/{competition}/{train}'.format(competition=competition, train=train))
-        joblib.dump(trainSet, 'dump/{competition}/train.dmp'.format(competition=competition), compress=3)
-
-    X, y = (trainSet[:,:-1], trainSet[:,-1])
-    print 'Score on Train:{score}'.format(score=model.score(X, y))
+        X, y = (trainSet[:,:-1], trainSet[:,-1])
+        print 'Score on Train:{score}'.format(score=model.score(X, y))
 
 def _getDynamicParamAndType(model):
     param_grid = getattr(model, 'param_grid')
