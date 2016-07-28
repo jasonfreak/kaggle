@@ -8,6 +8,7 @@ from sklearn.grid_search import BaseSearchCV
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import complib
 
 def fit(competition, label, train):
@@ -20,7 +21,7 @@ def fit(competition, label, train):
         trainSet = lib.loadTrainSet('data/{competition}/{train}'.format(competition=competition, train=train))
         joblib.dump(trainSet, 'dump/{competition}/train.dmp'.format(competition=competition), compress=3)
 
-    X, y = (trainSet[:,:-1], trainSet[:,-1])
+    X, y = (trainSet[:,:-1].astype(np.float64), trainSet[:,-1].astype(np.float64))
     model.fit(X, y)
     joblib.dump(model, 'dump/{competition}/{label}.dmp'.format(competition=competition, label=label), compress=3)
 
@@ -33,12 +34,13 @@ def predict(competition, label, test, submission):
     except IOError, e:
         testSet = lib.loadTestSet('data/{competition}/{test}'.format(competition=competition, test=test))
         joblib.dump(testSet, 'dump/{competition}/test.dmp'.format(competition=competition), compress=3)
-    X = testSet
+    idList, X = testSet[:,0], testSet[:,1:].astype(np.float64)
     y = model.predict(X)
 
-    lib.saveSubmission('data/{competition}/{submission}'.format(competition=competition, submission=submission), y)
+    lib.saveSubmission('data/{competition}/{submission}'.format(competition=competition, submission=submission), idList, y)
 
 def analyze(competition, label):
+    fig, ax = plt.subplots()
     model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
     assert(isinstance(model, BaseSearchCV))
     print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
@@ -50,7 +52,7 @@ def analyze(competition, label):
 	if n_params in (1, 2):
             if n_params == 1:
                 param, paramType = dynamicParamAndType[0]
-                _singleParamAnalyze(plt, model, param, paramType)
+                _singleParamAnalyze(ax, model, param, paramType)
             elif n_params == 2:
                 param1, paramType1= dynamicParamAndType[0]
                 param2, paramType2= dynamicParamAndType[1]
@@ -63,7 +65,7 @@ def analyze(competition, label):
             trainSet = lib.loadTrainSet('data/{competition}/{train}'.format(competition=competition, train=train))
             joblib.dump(trainSet, 'dump/{competition}/train.dmp'.format(competition=competition), compress=3)
 
-        X, y = (trainSet[:,:-1], trainSet[:,-1])
+        X, y = (trainSet[:,:-1].astype(np.float64), trainSet[:,-1].astype(np.float64))
         print 'Score on Train:{score}'.format(score=model.score(X, y))
 
 def _getDynamicParamAndType(model):
@@ -79,7 +81,8 @@ def _sortValueAndScore(valueList, scoreList):
     scoreList = [x[1] for x in valueAndScoreList]
     return valueList, scoreList
 
-def _singleParamAnalyze(plt, model, param, paramType):
+def _singleParamAnalyze(ax, model, param, paramType):
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
     n_grid_scores = len(model.grid_scores_)
 
     valueList = np.array([])
@@ -93,17 +96,21 @@ def _singleParamAnalyze(plt, model, param, paramType):
         x_ticks = np.unique(valueList)
         x_tickDict = dict([(x_ticks[i], i+0.5) for i in range(len(x_ticks))])
         x_pos = [x_tickDict[value] for value in valueList]
-        plt.xticks(x_tickDict.values(), x_tickDict.keys())
+        ax.set_xticks(x_tickDict.values(), x_tickDict.keys())
     else:
         valueList, scoreList = _sortValueAndScore(valueList, scoreList)
         x_pos = np.arange(n_grid_scores) + 0.5
-        plt.xticks(x_pos, valueList)
-    plt.plot(x_pos, scoreList, '-')
+        ax.set_xticks(x_pos, valueList)
+    y_pos = scoreList
 
-    plt.axis([0, n_grid_scores, 0, 1])
-    plt.title('How {param} Affects Accuracy'.format(param=param))
-    plt.xlabel(param)
-    plt.ylabel('Accuracy')
+    best = np.max(scoreList)
+    worst = np.min(scoreList)
+    print 'Score Range from {worst} to {best}, gap:{gap}'.format(best=best, worst=worst, gap=best-worst)
+
+    ax.plot(x_pos, y_pos, '-')
+    ax.set_title('How {param} Affects Accuracy'.format(param=param))
+    ax.set_xlabel(param)
+    ax.set_ylabel('Accuracy')
 
 def _coupleParamAnalyze(plt, model, params, paramsType):
     n_grid_scores = len(model.grid_scores_)
@@ -139,6 +146,10 @@ def _coupleParamAnalyze(plt, model, params, paramsType):
     plt.xlabel(param1)
     plt.ylabel(param2)
     plt.title('How {param1} and {param2} Affects Accuracy'.format(param1=param1, param2=param2))
+
+    best = np.max(scores)
+    worst = np.min(scores)
+    print 'Score Range from {worst} to {best}, gap:{gap}'.format(best=best, worst=worst, gap=best-worst)
 
 def listall(competition):
     fileList = listdir('dump/{competition}/'.format(competition=competition))

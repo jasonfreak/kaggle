@@ -1,36 +1,31 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.grid_search import GridSearchCV
-from sklearn.cross_validation import train_test_split
 
 def model(*argList, **argDict):
     classifier = RandomForestClassifier(verbose=2, n_jobs=-1)
-#    classifier = GradientBoostingClassifier(verbose=2)
-#    classifier = GradientBoostingClassifier(verbose=2)
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 101, 10)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 101, 10), 'max_features':np.arange(0.1, 1, 0.1)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_features':[0.1], 'min_samples_split':np.arange(2, 100, 10)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_features':np.arange(0.05, 0.15, 0.01), 'min_samples_split':[2]})
-#    searcher = GridSearchCV(classifier, param_grid={'criterion':['gini', 'entropy'], 'n_estimators':[100], 'max_features':[0.1], 'min_samples_split':[2]})
-#    searcher = GridSearchCV(classifier, param_grid={'criterion':['gini'], 'n_estimators':[100], 'max_features':[0.1], 'min_samples_split':np.arange(100, 1001, 100)})
-    searcher = GridSearchCV(classifier, param_grid={'criterion':['gini'], 'n_estimators':[100], 'max_features':[0.1], 'min_samples_split':[5]})
 
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(10, 51, 10)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'learning_rate':np.arange(0.05, 0.16, 0.02)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(1, 202, 10)})
+    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_features':np.arange(0.01, 0.11, 0.01)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_depth':np.arange(11, 22, 1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'min_samples_split':np.arange(2, 10001, 1000)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'min_samples_leaf':np.arange(1, 10001, 1000)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_leaf_nodes':np.arange(1000, 2001, 100)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_leaf_nodes':np.arange(1000, 2001, 100)})
+
     return searcher
     
 def loadTrainSet(filepath):
-    raw = np.loadtxt(filepath, delimiter=',', skiprows=1)
-#    X, X_abandom, y, y_abandom = train_test_split(raw[:,1:], raw[:,[0]], test_size=0.9, random_state=0)
+    raw = np.loadtxt(filepath, delimiter=',', dtype=np.str, skiprows=1)
     X, y = raw[:,1:], raw[:,0]
     trainSet = np.hstack((X, y.reshape(-1,1)))
     return trainSet
 
 def loadTestSet(filepath):
-    raw = np.loadtxt(filepath, delimiter=',', skiprows=1)
-    testSet = raw
+    raw = np.loadtxt(filepath, delimiter=',', dtype=np.str, skiprows=1)
+    testSet = np.hstack((np.arange(1, raw.shape[0]+1).reshape(-1,1), raw))
     return testSet
 
-def saveSubmission(filepath, y):
-    result = np.vstack((np.arange(1, y.size+1), y)).T
+def saveSubmission(filepath, idList, y):
+    result = np.vstack((idList.astype(np.int64), y.astype(np.int64))).T
     np.savetxt(filepath, result, fmt='%d', delimiter=',', header='ImageId,Label', comments='')
