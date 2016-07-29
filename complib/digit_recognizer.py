@@ -6,12 +6,11 @@ def model(*argList, **argDict):
     classifier = RandomForestClassifier(verbose=2, n_jobs=-1)
 
 #    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(1, 202, 10)})
-    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_features':np.arange(0.01, 0.11, 0.01)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_depth':np.arange(11, 22, 1)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'min_samples_split':np.arange(2, 10001, 1000)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'min_samples_leaf':np.arange(1, 10001, 1000)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_leaf_nodes':np.arange(1000, 2001, 100)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[100], 'max_leaf_nodes':np.arange(1000, 2001, 100)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[200], 'max_features':np.append(np.arange(42-40, 42, 2), np.arange(42, 42+40, 2))})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[200], 'max_depth':np.arange(40, 40+20, 1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[200], 'min_samples_split':np.arange(2, 2+10, 1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[200], 'min_samples_leaf':np.arange(1, 1+10, 1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[200], 'max_leaf_nodes':np.arange(3000, 3000+1000, 100)})
 
     return searcher
     

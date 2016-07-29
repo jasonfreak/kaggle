@@ -40,7 +40,6 @@ def predict(competition, label, test, submission):
     lib.saveSubmission('data/{competition}/{submission}'.format(competition=competition, submission=submission), idList, y)
 
 def analyze(competition, label):
-    fig, ax = plt.subplots()
     model = joblib.load('dump/{competition}/{label}.dmp'.format(competition=competition, label=label))
     assert(isinstance(model, BaseSearchCV))
     print 'Best Score:{best_score}, Best Params:{best_params}'.format(best_score=model.best_score_, best_params=model.best_params_)
@@ -52,7 +51,7 @@ def analyze(competition, label):
 	if n_params in (1, 2):
             if n_params == 1:
                 param, paramType = dynamicParamAndType[0]
-                _singleParamAnalyze(ax, model, param, paramType)
+                _singleParamAnalyze(plt, model, param, paramType)
             elif n_params == 2:
                 param1, paramType1= dynamicParamAndType[0]
                 param2, paramType2= dynamicParamAndType[1]
@@ -75,42 +74,49 @@ def _getDynamicParamAndType(model):
     paramTypeList =  map(lambda x:type(param_grid[x][0]), dynamicParamList)
     return zip(dynamicParamList, paramTypeList)
 
-def _sortValueAndScore(valueList, scoreList):
-    valueAndScoreList = sorted(zip(valueList, scoreList), key=lambda x:x[0])
-    valueList = [x[0] for x in valueAndScoreList]
-    scoreList = [x[1] for x in valueAndScoreList]
-    return valueList, scoreList
-
-def _singleParamAnalyze(ax, model, param, paramType):
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
+def _singleParamAnalyze(plt, model, param, paramType):
     n_grid_scores = len(model.grid_scores_)
+    fig, ax = plt.subplots(nrows=1, ncols=2)
+    ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
+    ax[1].yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
+    ax[1].yaxis.tick_right()
 
     valueList = np.array([])
     scoreList = np.array([])
+    covScoreList = np.array([])
 
     for grid_score in model.grid_scores_:
-        valueList = np.append(valueList, grid_score[0][param])
-        scoreList = np.append(scoreList, grid_score[1])
+        value = grid_score[0][param]
+        score = grid_score[1]
+        print 'Param:{param}={value} Score:{score}'.format(param=param, value=value, score=score)
+        valueList = np.append(valueList, value)
+        scoreList = np.append(scoreList, score)
+        covScoreList = np.append(covScoreList, np.std(grid_score[2]) / grid_score[1])
 
     if paramType is unicode:
         x_ticks = np.unique(valueList)
         x_tickDict = dict([(x_ticks[i], i+0.5) for i in range(len(x_ticks))])
         x_pos = [x_tickDict[value] for value in valueList]
-        ax.set_xticks(x_tickDict.values(), x_tickDict.keys())
+        ax[0].set_xticks(x_tickDict.values())
+        ax[0].set_xticklabels(x_tickDict.keys(), rotation=90)
+        ax[1].set_xticks(x_tickDict.values())
+        ax[1].set_xticklabels(x_tickDict.keys(), rotation=90)
     else:
-        valueList, scoreList = _sortValueAndScore(valueList, scoreList)
         x_pos = np.arange(n_grid_scores) + 0.5
-        ax.set_xticks(x_pos, valueList)
-    y_pos = scoreList
+        fig.canvas.draw()
+        ax[0].set_xticks(x_pos)
+        ax[0].set_xticklabels(valueList, rotation=90)
+        ax[1].set_xticks(x_pos)
+        ax[1].set_xticklabels(valueList, rotation=90)
 
-    best = np.max(scoreList)
-    worst = np.min(scoreList)
-    print 'Score Range from {worst} to {best}, gap:{gap}'.format(best=best, worst=worst, gap=best-worst)
-
-    ax.plot(x_pos, y_pos, '-')
-    ax.set_title('How {param} Affects Accuracy'.format(param=param))
-    ax.set_xlabel(param)
-    ax.set_ylabel('Accuracy')
+    ax[0].plot(x_pos, scoreList, '-')
+    ax[1].plot(x_pos, covScoreList, '-')
+    ax[0].set_title('Accuracy@\'{param}\''.format(param=param))
+    ax[1].set_title('COV Accuracy@\'{param}\''.format(param=param))
+    ax[0].set_xlabel(param)
+    ax[1].set_xlabel(param)
+    ax[0].set_ylabel('Accuracy')
+    ax[1].set_ylabel('STD Accuracy')
 
 def _coupleParamAnalyze(plt, model, params, paramsType):
     n_grid_scores = len(model.grid_scores_)
@@ -136,20 +142,15 @@ def _coupleParamAnalyze(plt, model, params, paramsType):
     idx_max_x = np.dot((scores == max_x.reshape((-1, 1))), np.arange(n_x_values))
     idx_max_y = np.dot(np.arange(n_y_values), (scores == max_y.reshape((1, -1))))
 
-#    print '{param1}\'s independence:{independence1}\n{param2}\'s independence:{independence2}'.format(param1=param1, independence1=np.std(idx_max_x), param2=param2, independence2=np.std(idx_max_y))
     image = 1 - scores
 
-    plt.xticks(param_x_pos.values(), param_x_pos.keys())
+    plt.xticks(param_x_pos.values(), param_x_pos.keys(), rotation=90)
     plt.yticks(param_y_pos.values(), param_y_pos.keys())
 
     plt.imshow(image, cmap=plt.cm.gray, interpolation='nearest')
     plt.xlabel(param1)
     plt.ylabel(param2)
     plt.title('How {param1} and {param2} Affects Accuracy'.format(param1=param1, param2=param2))
-
-    best = np.max(scores)
-    worst = np.min(scores)
-    print 'Score Range from {worst} to {best}, gap:{gap}'.format(best=best, worst=worst, gap=best-worst)
 
 def listall(competition):
     fileList = listdir('dump/{competition}/'.format(competition=competition))

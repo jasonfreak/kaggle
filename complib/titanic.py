@@ -10,13 +10,15 @@ _miss_value = lambda x: 'nan' if x == '' else x
 
 def model(*argList, **argDict):
     classifier = GradientBoostingClassifier(verbose=1)
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(1, 202, 10), 'learning_rate':np.arange(0.01, 0.21, 0.01)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_depth':np.arange(1, 22, 2)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'min_samples_split':np.arange(2, 22, 2)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'min_samples_leaf':np.arange(1, 42, 2)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'subsample':np.arange(0.1, 1.1, 0.1)})
-#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_leaf_nodes':np.arange(10, 22, 2)})
-    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_features':np.arange(0.1, 1, 0.1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':np.arange(50, 50+200, 10), 'learning_rate':np.arange(0.01, 0.01+0.2, 0.01)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_depth':np.arange(1, 1+20, 1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'min_samples_split':np.arange(2, 2+20, 2)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'min_samples_leaf':np.arange(1, 1+20, 2)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'subsample':np.arange(0.1, 0.1+1, 0.1)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_leaf_nodes':np.arange(20, 20+20, 2)})
+#    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'max_features':np.arange(1, 1+7, 1)})
+
+    searcher = GridSearchCV(classifier, param_grid={'n_estimators':[181], 'learning_rate':[0.08], 'min_samples_leaf':np.arange(1, 1+20, 2), 'max_features':np.arange(1, 1+7, 1)})
 
     return searcher
 
