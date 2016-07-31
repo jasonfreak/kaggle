@@ -135,7 +135,9 @@ def _coupleParamAnalyze(plt, model, params, paramsType):
     for grid_score in model.grid_scores_:
         value1 = grid_score[0][param1]
         value2 = grid_score[0][param2]
-        scores[param_y_pos[value2], param_x_pos[value1]] = grid_score[1] 
+        score = grid_score[1] 
+        print 'Param:{param1}={value1} {param2}={value2} Score:{score}'.format(param1=param1, value1=value1, param2=param2, value2=value2, score=score)
+        scores[param_y_pos[value2], param_x_pos[value1]] = score
 
     max_x = np.max(scores, axis=1)
     max_y = np.max(scores, axis=0)

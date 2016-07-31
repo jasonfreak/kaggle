@@ -1,3 +1,3 @@
-import digit_recognizer, titanic, toy
+import digit_recognizer, titanic, toy, hackathon3x
 
-__all__ = ['digit_recognizer', 'titanic', 'toy']
+__all__ = ['digit_recognizer', 'titanic', 'toy', 'hackathon3x']
