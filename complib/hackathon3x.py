@@ -17,7 +17,7 @@ _miss_value = lambda x: 'nan' if x == '' else x
 def model(*argList, **argDict):
     classifier = GradientBoostingClassifier(verbose=1)
 
-    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'min_samples_split': [500], 'min_samples_leaf':[50], 'max_depth':[8], 'max_features':['sqrt'], 'subsample':[0.8]}
+#    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'min_samples_split': [1200], 'min_samples_leaf':[60], 'max_depth':[9], 'max_features':[7], 'subsample':[0.8]}
 
 #    param_grid={'n_estimators':np.arange(50, 50+50, 10), 'learning_rate':np.arange(0.01, 0.01+0.2, 0.01)}
 #    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'max_depth':np.arange(1, 1+10, 1)}
@@ -41,6 +41,14 @@ def model(*argList, **argDict):
 #    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'min_samples_split':[202], 'min_samples_leaf':np.arange(2, 2+100, 10)}
 #    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'min_samples_split':[202], 'subsample':np.arange(0.7, 0.7+0.29, 0.01)}
 #    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'min_samples_split':[202], 'max_features':np.arange(1, 1+19, 1)}
+
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':np.arange(1, 1+19, 1)}
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':np.arange(1, 1+100, 10)}
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':[51], 'min_samples_split':np.arange(2, 2+1500, 100)}
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':[51], 'min_samples_split':[402], 'max_depth':np.arange(1, 1+10, 1)}
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':[51], 'min_samples_split':np.arange(2, 2+1500, 100), 'max_depth':[7]}
+    param_grid={'n_estimators':[60], 'learning_rate':[0.1], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':np.arange(1, 1+100, 1), 'min_samples_split':[1202], 'max_depth':[7]}
+    param_grid={'n_estimators':[1500], 'learning_rate':[0.005], 'subsample':[0.84], 'max_features':[11], 'min_samples_leaf':[81], 'min_samples_split':[1202], 'max_depth':[7]}
 
     searcher = GridSearchCV(classifier, n_jobs=-1, scoring='roc_auc', param_grid=param_grid)
 
